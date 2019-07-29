@@ -1,0 +1,34 @@
+{
+    "Address": ["0.0.0.0","5432"],
+    "BehavQuerys":[
+        ["SELECT a.attname as",
+            ["Field","Type"],
+            [
+            ["MARK", "bigint"],
+            ["TM", "timestamp with time zone"],
+            ["VAL", "double precision"]
+            ]
+        ],
+        ["SELECT a.attname FROM pg_class",
+            ["attname"],
+            [
+            ["MARK"],
+            ["TM"]
+            ]
+        ],
+        ["SELECT c.relname as \"TableName\"",
+            ["TableName"],
+            [
+            ["DBAVl_nn_P1_U_1_A"],
+            ["DBAVl_nn_P1_U_1_B"],
+            ["DBAVl_nn_P1_U_1_C"]
+            ]
+        ]
+
+    ],
+    "SendFilter":["INSERT"],
+
+    "ShowLog":false,
+    "ShowSendData":true
+
+}

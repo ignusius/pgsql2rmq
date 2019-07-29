@@ -3,10 +3,14 @@ package main
 import (
 	"context"
 	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
+	"os"
+	"reflect"
 	"regexp"
+	"strings"
 
 	"pgfake/pgsrv"
 
@@ -16,9 +20,19 @@ import (
 )
 
 var (
-	s    pgsrv.Server
-	mock *rows
+	s      pgsrv.Server
+	mock   *rows
+	config configuration
 )
+
+type configuration struct {
+	Address      []string
+	Pgsql        []string
+	BehavQuerys  [][]interface{}
+	SendFilter   []string
+	ShowLog      bool
+	ShowSendData bool
+}
 
 type rows struct {
 	cols []string
@@ -74,52 +88,64 @@ func (rows *rows) AddRowsInt(v []int32) {
 }
 
 func (rows *rows) Query(ctx context.Context, node pg_query.Node) (driver.Rows, error) {
-	//context := ctx.(context.Context)
-	//context.WithValue(ctx, "myKeeey", "wwwwwwwwwwwwwwwwwwww")
-	fmt.Println("--->", ctx.Value(pgsrv.SqlCtxKey).(string), "<---")
 
-	var validID = regexp.MustCompile(`SELECT a.attname as `)
-	var validID2 = regexp.MustCompile(`SELECT count`)
-	var validID3 = regexp.MustCompile(`SELECT a.attname FROM pg_class`)
-	var validID4 = regexp.MustCompile("SELECT c.relname as \"TableName\"")
+	if config.ShowLog {
 
-	if validID.MatchString(ctx.Value(pgsrv.SqlCtxKey).(string)) {
-		mock.AddCol("Field")
-		mock.AddCol("Type")
-		mock.AddRows([]string{"MARK", "bigint"})
-		mock.AddRows([]string{"TM", "timestamp with time zone"})
-		mock.AddRows([]string{"VAL", "double precision"})
-
-	}
-	if validID2.MatchString(ctx.Value(pgsrv.SqlCtxKey).(string)) {
-		mock.AddCol("count")
-		mock.AddRowsInt([]int32{1})
-
+		fmt.Println("Q-->", ctx.Value(pgsrv.SqlCtxKey).(string), "<--Q")
 	}
 
-	if validID3.MatchString(ctx.Value(pgsrv.SqlCtxKey).(string)) {
-		mock.AddCol("attname")
-		mock.AddRows([]string{"MARK"})
-		mock.AddRows([]string{"TM"})
+	valid := regexp.MustCompile((config.BehavQuerys[0][0]).(string))
+	if valid.MatchString(ctx.Value(pgsrv.SqlCtxKey).(string)) {
+		for _, col := range config.BehavQuerys[0][1].([]interface{}) {
+			mock.AddCol(col.(string))
+		}
 
-	}
-
-	if validID4.MatchString(ctx.Value(pgsrv.SqlCtxKey).(string)) {
-		mock.AddCol("TableName")
-		mock.AddRows([]string{"DBAVl_nn_P1_U_1_A"})
-		mock.AddRows([]string{"DBAVl_nn_P1_U_1_B"})
-		mock.AddRows([]string{"DBAVl_nn_P1_U_1_C"})
+		for _, rowsarr := range config.BehavQuerys[0][2].([]interface{}) {
+			mock.AddRows(interfaceStringArr(rowsarr))
+		}
 
 	}
 
 	return mock, nil
 }
 
+func interfaceStringArr(slice interface{}) []string {
+	s := reflect.ValueOf(slice)
+	if s.Kind() != reflect.Slice {
+		panic("InterfaceSlice() given a non-slice type")
+	}
+
+	ret := make([]string, s.Len())
+
+	for i := 0; i < s.Len(); i++ {
+		ret[i] = s.Index(i).Interface().(string)
+	}
+
+	return ret
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if strings.EqualFold(a, e) {
+			return true
+		}
+	}
+	return false
+}
+
 func main() {
+
+	file, _ := os.Open("config.json")
+	decoder := json.NewDecoder(file)
+	config = configuration{}
+	err := decoder.Decode(&config)
+	if err != nil {
+		fmt.Println("!-->error configuration file:", err, "<--!")
+	}
 
 	//mock.Next([)
 
-	ln, err := net.Listen("tcp", ":5432")
+	ln, err := net.Listen("tcp", config.Address[0]+":"+config.Address[1])
 	if err != nil {
 		fmt.Println("net.Listen error")
 	}
@@ -144,7 +170,21 @@ func main() {
 		}
 	}()
 	for {
-		fmt.Println("-->", <-pgsrv.GlobCtx)
+		data := <-pgsrv.GlobCtx
+		if config.ShowLog {
+			fmt.Println("S-->", data["Session"], "<--S")
+			fmt.Println("Q-->", data["SQL"], "<--Q")
+		}
+		splitarr := strings.Split(data["SQL"].(string), " ")
+
+		for _, filter := range config.SendFilter {
+			if contains(splitarr, filter) {
+				if config.ShowSendData {
+					fmt.Println("==>", data["SQL"].(string))
+				}
+			}
+		}
+
 	}
 
 }

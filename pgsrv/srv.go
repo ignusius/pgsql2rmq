@@ -3,7 +3,6 @@ package pgsrv
 import (
 	"context"
 	"database/sql/driver"
-	"fmt"
 	"net"
 
 	nodes "github.com/lfittl/pg_query_go/nodes"
@@ -46,7 +45,14 @@ func (s *server) Query(ctx context.Context, n nodes.Node) (driver.Rows, error) {
 
 // implements Execer
 func (s *server) Exec(ctx context.Context, n nodes.Node) (driver.Result, error) {
-	fmt.Println("------>", ctx.Value(SqlCtxKey))
+	//fmt.Println("E-->", ctx.Value(SqlCtxKey), "<--E")
+	m := make(map[string]interface{})
+
+	m["SQL"] = ctx.Value(SqlCtxKey)
+	m["Session"] = ctx.Value(SessionCtxKey)
+
+	GlobCtx <- m
+
 	var retnil driver.Result
 
 	execer, ok := s.queryer.(Execer)
