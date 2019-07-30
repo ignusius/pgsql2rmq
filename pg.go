@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"database/sql/driver"
 	"encoding/json"
@@ -15,6 +16,7 @@ import (
 	"pgfake/pgsrv"
 
 	pg_query "github.com/lfittl/pg_query_go/nodes"
+	"github.com/streadway/amqp"
 
 	_ "github.com/lib/pq"
 )
@@ -65,22 +67,12 @@ func (rows *rows) AddCol(name string) {
 	rows.cols = append(rows.cols, name)
 }
 
-func (rows *rows) AddRows(v []string) {
+func (rows *rows) AddRows(v []interface{}) {
 	//var err error
 	row := make([]driver.Value, len(v))
 	for i := 0; i < len(v); i++ {
-		row[i], _ = driver.String.ConvertValue(v[i])
-	}
+		row[i], _ = driver.DefaultParameterConverter.ConvertValue(v[i])
 
-	rows.rows = append(rows.rows, row)
-
-}
-
-func (rows *rows) AddRowsInt(v []int32) {
-	//var err error
-	row := make([]driver.Value, len(v))
-	for i := 0; i < len(v); i++ {
-		row[i], _ = driver.Int32.ConvertValue(v[i])
 	}
 
 	rows.rows = append(rows.rows, row)
@@ -101,7 +93,7 @@ func (rows *rows) Query(ctx context.Context, node pg_query.Node) (driver.Rows, e
 		}
 
 		for _, rowsarr := range config.BehavQuerys[0][2].([]interface{}) {
-			mock.AddRows(interfaceStringArr(rowsarr))
+			mock.AddRows(interfaceArr(rowsarr))
 		}
 
 	}
@@ -109,36 +101,56 @@ func (rows *rows) Query(ctx context.Context, node pg_query.Node) (driver.Rows, e
 	return mock, nil
 }
 
-func interfaceStringArr(slice interface{}) []string {
+func interfaceArr(slice interface{}) []interface{} {
 	s := reflect.ValueOf(slice)
 	if s.Kind() != reflect.Slice {
 		panic("InterfaceSlice() given a non-slice type")
 	}
 
-	ret := make([]string, s.Len())
+	ret := make([]interface{}, s.Len())
 
 	for i := 0; i < s.Len(); i++ {
-		ret[i] = s.Index(i).Interface().(string)
+		ret[i] = s.Index(i).Interface()
 	}
 
 	return ret
 }
 
 func contains(s []string, e string) bool {
+	str := bytes.Trim([]byte(e), "\x00")
+
 	for _, a := range s {
-		if strings.EqualFold(a, e) {
+
+		if strings.EqualFold(a, string(str)) {
 			return true
 		}
+		if strings.EqualFold(a+";", string(str)) {
+
+			return true
+		}
+
 	}
 	return false
 }
 
 func main() {
 
+	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	if err != nil {
+		fmt.Println("Amqp.Dial error")
+	}
+	defer conn.Close()
+
+	ch, err := conn.Channel()
+	if err != nil {
+		fmt.Println("Conn.Channel error")
+	}
+	defer ch.Close()
+
 	file, _ := os.Open("config.json")
 	decoder := json.NewDecoder(file)
 	config = configuration{}
-	err := decoder.Decode(&config)
+	err = decoder.Decode(&config)
 	if err != nil {
 		fmt.Println("!-->error configuration file:", err, "<--!")
 	}
@@ -177,11 +189,32 @@ func main() {
 		}
 		splitarr := strings.Split(data["SQL"].(string), " ")
 
-		for _, filter := range config.SendFilter {
-			if contains(splitarr, filter) {
-				if config.ShowSendData {
-					fmt.Println("==>", data["SQL"].(string))
+		if contains(config.SendFilter, splitarr[0]) {
+			if config.ShowSendData {
+				fmt.Println("==>", data["SQL"].(string))
+				q, err := ch.QueueDeclare(
+					"hello", // name
+					false,   // durable
+					false,   // delete when unused
+					false,   // exclusive
+					false,   // no-wait
+					nil,     // arguments
+				)
+				if err != nil {
+					fmt.Println("Failed to declare a queue", err)
 				}
+
+				body := data["SQL"].(string)
+				err = ch.Publish(
+					"",     // exchange
+					q.Name, // routing key
+					false,  // mandatory
+					false,  // immediate
+					amqp.Publishing{
+						ContentType: "text/plain",
+						Body:        []byte(body),
+					})
+
 			}
 		}
 
