@@ -49,7 +49,7 @@ func (s *server) Exec(ctx context.Context, n nodes.Node) (driver.Result, error) 
 	m := make(map[string]interface{})
 
 	m["SQL"] = ctx.Value(SqlCtxKey)
-	m["Session"] = ctx.Value(SessionCtxKey)
+	m["Session"] = ctx.Value(SessionCtxKey).(*session).Args
 
 	GlobCtx <- m
 

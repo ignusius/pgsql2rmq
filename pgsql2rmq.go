@@ -29,6 +29,7 @@ var (
 
 type configuration struct {
 	Address      []string
+	RabbitMQ     []string
 	Pgsql        []string
 	BehavQuerys  [][]interface{}
 	SendFilter   []string
@@ -135,25 +136,34 @@ func contains(s []string, e string) bool {
 
 func main() {
 
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	fmt.Println("Prepare server        [ OK ]")
+	file, _ := os.Open("config.json")
+	decoder := json.NewDecoder(file)
+	config = configuration{}
+	err := decoder.Decode(&config)
 	if err != nil {
-		fmt.Println("Amqp.Dial error")
+		fmt.Println("Read configuration    [ ERROR ]")
+		fmt.Println("E-->", err, "<--E")
+		os.Exit(1)
+	}
+	fmt.Println("Read configuration    [ OK ]")
+
+	conn, err := amqp.Dial("amqp://" + config.RabbitMQ[0] + ":" + config.RabbitMQ[1] + "@" + config.RabbitMQ[2] + ":" + config.RabbitMQ[3] + "/")
+
+	if err != nil {
+		fmt.Println("Connect to RabbitMQ   [ ERROR ]")
+		os.Exit(1)
 	}
 	defer conn.Close()
 
+	fmt.Println("Connect to RabbitMQ   [ OK ]")
+
 	ch, err := conn.Channel()
+
 	if err != nil {
 		fmt.Println("Conn.Channel error")
 	}
 	defer ch.Close()
-
-	file, _ := os.Open("config.json")
-	decoder := json.NewDecoder(file)
-	config = configuration{}
-	err = decoder.Decode(&config)
-	if err != nil {
-		fmt.Println("!-->error configuration file:", err, "<--!")
-	}
 
 	//mock.Next([)
 
@@ -163,6 +173,7 @@ func main() {
 	}
 
 	go func() {
+		fmt.Println("PgSQL2RMQ starting    [ OK ]")
 		for {
 
 			mock = &rows{}
@@ -182,14 +193,18 @@ func main() {
 		}
 	}()
 	for {
+
 		data := <-pgsrv.GlobCtx
 		dataregexp := regexp.MustCompile(`'(\d*\.?\d*)'`)
 		datasql := dataregexp.ReplaceAllString(data["SQL"].(string), " $1")
 
+		ses := data["Session"].(map[string]interface{})
+
 		if config.ShowLog {
-			fmt.Println("S-->", data["Session"], "<--S")
+			fmt.Println("S-->", "Username:", ses["user"], ", Database:", ses["database"], "<--S")
 			fmt.Println("Q-->", datasql, "<--Q")
 		}
+
 		//splitarr := strings.Split(data["SQL"].(string), "$1")
 
 		//if contains(config.SendFilter, splitarr[0]) {
@@ -200,12 +215,12 @@ func main() {
 			valid := regexp.MustCompile(filter)
 			if valid.MatchString(datasql) {
 				q, err := ch.QueueDeclare(
-					"hello", // name
-					false,   // durable
-					false,   // delete when unused
-					false,   // exclusive
-					false,   // no-wait
-					nil,     // arguments
+					ses["database"].(string), // name
+					false, // durable
+					false, // delete when unused
+					false, // exclusive
+					false, // no-wait
+					nil,   // arguments
 				)
 				if err != nil {
 					fmt.Println("Failed to declare a queue", err)

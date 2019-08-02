@@ -1,5 +1,6 @@
 {
     "Address": ["0.0.0.0","5432"],
+    "RabbitMQ": ["guest","guest", "0.0.0.0","5672"],
     "BehavQuerys":[
         ["SELECT a.attname as",
             ["Field","Type"],
