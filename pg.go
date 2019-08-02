@@ -183,15 +183,22 @@ func main() {
 	}()
 	for {
 		data := <-pgsrv.GlobCtx
+		dataregexp := regexp.MustCompile(`'(\d*\.?\d*)'`)
+		datasql := dataregexp.ReplaceAllString(data["SQL"].(string), " $1")
+
 		if config.ShowLog {
 			fmt.Println("S-->", data["Session"], "<--S")
-			fmt.Println("Q-->", data["SQL"], "<--Q")
+			fmt.Println("Q-->", datasql, "<--Q")
 		}
-		splitarr := strings.Split(data["SQL"].(string), " ")
+		//splitarr := strings.Split(data["SQL"].(string), "$1")
 
-		if contains(config.SendFilter, splitarr[0]) {
-			if config.ShowSendData {
-				fmt.Println("==>", data["SQL"].(string))
+		//if contains(config.SendFilter, splitarr[0]) {
+		//	if config.ShowSendData {
+		//fmt.Println("==>", data["SQL"].(string))
+		for _, filter := range config.SendFilter {
+
+			valid := regexp.MustCompile(filter)
+			if valid.MatchString(datasql) {
 				q, err := ch.QueueDeclare(
 					"hello", // name
 					false,   // durable
@@ -204,7 +211,7 @@ func main() {
 					fmt.Println("Failed to declare a queue", err)
 				}
 
-				body := data["SQL"].(string)
+				body := datasql
 				err = ch.Publish(
 					"",     // exchange
 					q.Name, // routing key
@@ -214,8 +221,9 @@ func main() {
 						ContentType: "text/plain",
 						Body:        []byte(body),
 					})
-
 			}
+
+			//}
 		}
 
 	}

@@ -27,7 +27,7 @@
         ]
 
     ],
-    "SendFilter":["INSERT","BEGIN","COMMIT"],
+    "SendFilter":["^INSERT","^BEGIN","^COMMIT"],
 
     "ShowLog":true,
     "ShowSendData":true
