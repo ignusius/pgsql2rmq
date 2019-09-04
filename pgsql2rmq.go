@@ -136,27 +136,27 @@ func contains(s []string, e string) bool {
 
 func main() {
 
-	fmt.Println("Prepare server        [ OK ]")
+	fmt.Printf("%-20s %10s\n", "Prepare server", "[ OK ]")
 	file, _ := os.Open("config.json")
 	decoder := json.NewDecoder(file)
 	config = configuration{}
 	err := decoder.Decode(&config)
 	if err != nil {
-		fmt.Println("Read configuration    [ ERROR ]")
+		fmt.Printf("%-20s %10s\n", "Read configuration", "[ ERROR ]")
 		fmt.Println("E-->", err, "<--E")
 		os.Exit(1)
 	}
-	fmt.Println("Read configuration    [ OK ]")
+	fmt.Printf("%-20s %10s\n", "Read configuration", "[ OK ]")
 
 	conn, err := amqp.Dial("amqp://" + config.RabbitMQ[0] + ":" + config.RabbitMQ[1] + "@" + config.RabbitMQ[2] + ":" + config.RabbitMQ[3] + "/")
 
 	if err != nil {
-		fmt.Println("Connect to RabbitMQ   [ ERROR ]")
+		fmt.Printf("%-20s %10s\n", "Connect to RabbitMQ", "[ ERROR ]")
 		os.Exit(1)
 	}
 	defer conn.Close()
 
-	fmt.Println("Connect to RabbitMQ   [ OK ]")
+	fmt.Printf("%-20s %10s\n", "Connect to RabbitMQ", "[ OK ]")
 
 	ch, err := conn.Channel()
 
@@ -173,7 +173,7 @@ func main() {
 	}
 
 	go func() {
-		fmt.Println("PgSQL2RMQ starting    [ OK ]")
+		fmt.Printf("%-20s %10s\n", "PgSQL2RMQ starting", "[ OK ]")
 		for {
 
 			mock = &rows{}
