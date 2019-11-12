@@ -12,6 +12,46 @@ go build pgsql2rmq.go
 
 ```
 
+# Config
+```json
+{
+    "Address": ["0.0.0.0","5432"],  <-- address and port  fake pgsql2rmq server
+    "RabbitMQ": ["guest","guest", "0.0.0.0","5672"], <-- RabbitMQ connection
+    "BehavQuerys":[  <-- Behavator Querys
+        ["SELECT a.attname as",   <-- If query start as "SELECT a.attname as" 
+            ["Field","Type"],  <-- Generate Columns "Field" and "Type"
+            [
+            ["MARK", "bigint"],  <-- Generate row
+            ["TM", "timestamp with time zone"], <-- Generate row
+            ["VAL", "double precision"] <-- Generate row
+            ]
+        ],
+        ["SELECT a.attname FROM pg_class",   <-- If query start as ""SELECT a.attname FROM pg_class" 
+            ["attname"],  <-- Generate Column "attname"
+            [
+            ["MARK"], <-- Generate row
+            ["TM"] <-- Generate row
+            ]
+        ],
+        ["SELECT c.relname as \"TableName\"", <-- If query start as 'SELECT c.relname as "TableName"'
+            ["TableName"], <-- Generate Column "TableName"
+            [
+            ["DBArch"], <-- Generate row
+            ["DBAVl_nn_P1_U_1_A"], <-- Generate row
+            ["DBAVl_nn_P1_U_1_B"], <-- Generate row
+            ["DBAVl_nn_P1_U_1_C"]  <-- Generate row
+            ]
+        ]
+
+    ],
+    "SendFilter":["^INSERT","^BEGIN","^COMMIT"], <--Filter querys from send to RMQ
+
+    "ShowLog":true,  <--Show log in console
+    "ShowSendData":true  <-- Show send data to RMQ
+
+}
+```
+
 # Example client from pgsql2rmq
 
 ```go
