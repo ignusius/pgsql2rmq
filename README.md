@@ -13,7 +13,7 @@ go build pgsql2rmq.go
 ```
 
 # Config
-```json
+```text
 {
     "Address": ["0.0.0.0","5432"],  <-- address and port  fake pgsql2rmq server
     "RabbitMQ": ["guest","guest", "0.0.0.0","5672"], <-- RabbitMQ connection
