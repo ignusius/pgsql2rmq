@@ -31,7 +31,7 @@ type configuration struct {
 	Address      []string
 	RabbitMQ     []string
 	Pgsql        []string
-	BehavQuerys  [][]interface{}~
+	BehavQuerys  [][]interface{}
 	SendFilter   []string
 	ShowLog      bool
 	ShowSendData bool
