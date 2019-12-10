@@ -6,7 +6,7 @@ import (
 	"crypto/rand"
 	"fmt"
 
-	"pgfake/pgsrv/protocol"
+	"pgsql2rmq/pgsrv/protocol"
 )
 
 const errExpectedPassword = "expected password response, got message type %q"

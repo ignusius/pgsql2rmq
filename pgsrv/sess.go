@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"sync"
 
-	"pgfake/pgsrv/protocol"
+	"pgsql2rmq/pgsrv/protocol"
 )
 
 var allSessions sync.Map

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"pgfake/pgsrv/protocol"
+	"pgsql2rmq/pgsrv/protocol"
 
 	parser "github.com/lfittl/pg_query_go"
 	nodes "github.com/lfittl/pg_query_go/nodes"

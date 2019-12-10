@@ -6,6 +6,8 @@ Postgres Fake Server is an implementation of a fake PostgreSQL server for forwar
 # Build and run
 
 ```
+
+cp -R pgsql2rmq /$HOME/go/src/
 go build pgsql2rmq.go
 
 ./pgsql2rmq

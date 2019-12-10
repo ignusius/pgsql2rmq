@@ -13,7 +13,7 @@ import (
 	"regexp"
 	"strings"
 
-	"pgfake/pgsrv"
+	"pgsql2rmq/pgsrv"
 
 	pg_query "github.com/lfittl/pg_query_go/nodes"
 	"github.com/streadway/amqp"
@@ -31,7 +31,7 @@ type configuration struct {
 	Address      []string
 	RabbitMQ     []string
 	Pgsql        []string
-	BehavQuerys  [][]interface{}
+	BehavQuerys  [][]interface{}~
 	SendFilter   []string
 	ShowLog      bool
 	ShowSendData bool
