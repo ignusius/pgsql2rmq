@@ -42,8 +42,10 @@ type rows struct {
 	rows [][]driver.Value
 }
 
-func (*rows) Close() error {
-	panic("not implemented")
+func (rows *rows) Close() error {
+	rows.cols = []string{}
+	rows.rows = [][]driver.Value{}
+	return nil
 
 }
 
@@ -82,6 +84,11 @@ func (rows *rows) AddRows(v []interface{}) {
 
 func (rows *rows) Query(ctx context.Context, node pg_query.Node) (driver.Rows, error) {
 
+	rows.Close()
+
+	fmt.Println("-------------------->", mock)
+	fmt.Println("---------------r----->", rows)
+
 	if config.ShowLog {
 
 		fmt.Println("Q-->", ctx.Value(pgsrv.SqlCtxKey).(string), "<--Q")
@@ -90,16 +97,15 @@ func (rows *rows) Query(ctx context.Context, node pg_query.Node) (driver.Rows, e
 	valid := regexp.MustCompile((config.BehavQuerys[0][0]).(string))
 	if valid.MatchString(ctx.Value(pgsrv.SqlCtxKey).(string)) {
 		for _, col := range config.BehavQuerys[0][1].([]interface{}) {
-			mock.AddCol(col.(string))
+			rows.AddCol(col.(string))
 		}
-
 		for _, rowsarr := range config.BehavQuerys[0][2].([]interface{}) {
-			mock.AddRows(interfaceArr(rowsarr))
+			rows.AddRows(interfaceArr(rowsarr))
 		}
 
 	}
 
-	return mock, nil
+	return rows, nil
 }
 
 func interfaceArr(slice interface{}) []interface{} {
@@ -175,9 +181,9 @@ func main() {
 	go func() {
 		fmt.Printf("%-20s %10s\n", "PgSQL2RMQ starting", "[ OK ]")
 		for {
-
-			mock = &rows{}
-			s = pgsrv.New(mock)
+			fmt.Println("ssssssssssssssssssssssssssssssss")
+			//rows := &rows{}
+			s = pgsrv.New(&rows{})
 
 			conn, err := ln.Accept()
 			if err != nil {
