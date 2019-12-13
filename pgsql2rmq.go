@@ -86,9 +86,6 @@ func (rows *rows) Query(ctx context.Context, node pg_query.Node) (driver.Rows, e
 
 	rows.Close()
 
-	fmt.Println("-------------------->", mock)
-	fmt.Println("---------------r----->", rows)
-
 	if config.ShowLog {
 
 		fmt.Println("Q-->", ctx.Value(pgsrv.SqlCtxKey).(string), "<--Q")
@@ -171,8 +168,6 @@ func main() {
 	}
 	defer ch.Close()
 
-	//mock.Next([)
-
 	ln, err := net.Listen("tcp", config.Address[0]+":"+config.Address[1])
 	if err != nil {
 		fmt.Println("net.Listen error")
@@ -181,8 +176,7 @@ func main() {
 	go func() {
 		fmt.Printf("%-20s %10s\n", "PgSQL2RMQ starting", "[ OK ]")
 		for {
-			fmt.Println("ssssssssssssssssssssssssssssssss")
-			//rows := &rows{}
+
 			s = pgsrv.New(&rows{})
 
 			conn, err := ln.Accept()
