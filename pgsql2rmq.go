@@ -91,15 +91,18 @@ func (rows *rows) Query(ctx context.Context, node pg_query.Node) (driver.Rows, e
 		fmt.Println("Q-->", ctx.Value(pgsrv.SqlCtxKey).(string), "<--Q")
 	}
 
-	valid := regexp.MustCompile((config.BehavQuerys[0][0]).(string))
-	if valid.MatchString(ctx.Value(pgsrv.SqlCtxKey).(string)) {
-		for _, col := range config.BehavQuerys[0][1].([]interface{}) {
-			rows.AddCol(col.(string))
-		}
-		for _, rowsarr := range config.BehavQuerys[0][2].([]interface{}) {
-			rows.AddRows(interfaceArr(rowsarr))
-		}
+	for x := len(config.BehavQuerys) - 1; x >= 0; x-- {
 
+		valid := regexp.MustCompile((config.BehavQuerys[x][0]).(string))
+		if valid.MatchString(ctx.Value(pgsrv.SqlCtxKey).(string)) {
+			for _, col := range config.BehavQuerys[x][1].([]interface{}) {
+				rows.AddCol(col.(string))
+			}
+			for _, rowsarr := range config.BehavQuerys[x][2].([]interface{}) {
+				rows.AddRows(interfaceArr(rowsarr))
+			}
+
+		}
 	}
 
 	return rows, nil
@@ -177,7 +180,8 @@ func main() {
 		fmt.Printf("%-20s %10s\n", "PgSQL2RMQ starting", "[ OK ]")
 		for {
 
-			s = pgsrv.New(&rows{})
+			mock = &rows{}
+			s = pgsrv.New(mock)
 
 			conn, err := ln.Accept()
 			if err != nil {
