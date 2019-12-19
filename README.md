@@ -1,12 +1,11 @@
 
 # pgsql2rmq
 
-Postgres Fake Server is an implementation of a fake PostgreSQL server for forwarding execution instructions and creating virtual tables for queries by templates.
+Pgsql2rmq is an implementation of a fake PostgreSQL server for forwarding execution instructions and creating virtual tables for queries by templates. Pgsql2rmq send an execution to RabbitMQ (INSERT, COMMIT, BEGIN...) and generate virtual tables for queries.
 
 # Build and run
 
 ```
-
 cp -R pgsql2rmq /$HOME/go/src/
 go build pgsql2rmq.go
 
