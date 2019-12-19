@@ -1,7 +1,7 @@
 
 # pgsql2rmq
 
-Pgsql2rmq is an implementation of a fake PostgreSQL server for forwarding execution instructions and creating virtual tables for queries by templates. Pgsql2rmq send an execution to RabbitMQ (INSERT, COMMIT, BEGIN...) and generate virtual tables for queries.
+Pgsql2rmq is an implementation of a fake PostgreSQL server for forwarding execution instructions and creating virtual tables for queries by templates. Pgsql2rmq send an execution to RabbitMQ (INSERT, COMMIT, BEGIN...) and generate virtual tables for queries. It project use library postgres-srv https://github.com/ignusius/pgsql2rmq/tree/master/pgsrv#postgres-srv (License: MIT).
 
 # Build and run
 
