@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"database/sql/driver"
 	"encoding/json"
@@ -11,7 +10,6 @@ import (
 	"os"
 	"reflect"
 	"regexp"
-	"strings"
 
 	"pgsql2rmq/pgsrv"
 
@@ -37,22 +35,25 @@ type configuration struct {
 	ShowSendData bool
 }
 
+//Virual cols and rows
 type rows struct {
 	cols []string
 	rows [][]driver.Value
 }
 
+//Clear cols and rows
 func (rows *rows) Close() error {
 	rows.cols = []string{}
 	rows.rows = [][]driver.Value{}
 	return nil
-
 }
 
+//Return colums
 func (rows *rows) Columns() []string {
 	return rows.cols
 }
 
+//Implement driver.Rows method Next
 func (rows *rows) Next(dest []driver.Value) error {
 	if len(rows.rows) == 0 {
 		return io.EOF
@@ -66,12 +67,13 @@ func (rows *rows) Next(dest []driver.Value) error {
 	return nil
 }
 
+//Add column in virtual table
 func (rows *rows) AddCol(name string) {
 	rows.cols = append(rows.cols, name)
 }
 
+//Add rows in virtual table
 func (rows *rows) AddRows(v []interface{}) {
-	//var err error
 	row := make([]driver.Value, len(v))
 	for i := 0; i < len(v); i++ {
 		row[i], _ = driver.DefaultParameterConverter.ConvertValue(v[i])
@@ -82,6 +84,7 @@ func (rows *rows) AddRows(v []interface{}) {
 
 }
 
+//Return virtual table from SQL-query by tamplates
 func (rows *rows) Query(ctx context.Context, node pg_query.Node) (driver.Rows, error) {
 
 	rows.Close()
@@ -108,6 +111,7 @@ func (rows *rows) Query(ctx context.Context, node pg_query.Node) (driver.Rows, e
 	return rows, nil
 }
 
+//Transform slice interface{} to []interface{}
 func interfaceArr(slice interface{}) []interface{} {
 	s := reflect.ValueOf(slice)
 	if s.Kind() != reflect.Slice {
@@ -121,23 +125,6 @@ func interfaceArr(slice interface{}) []interface{} {
 	}
 
 	return ret
-}
-
-func contains(s []string, e string) bool {
-	str := bytes.Trim([]byte(e), "\x00")
-
-	for _, a := range s {
-
-		if strings.EqualFold(a, string(str)) {
-			return true
-		}
-		if strings.EqualFold(a+";", string(str)) {
-
-			return true
-		}
-
-	}
-	return false
 }
 
 func main() {
@@ -175,7 +162,7 @@ func main() {
 	if err != nil {
 		fmt.Println("net.Listen error")
 	}
-
+	//loop from form virtual tables
 	go func() {
 		fmt.Printf("%-20s %10s\n", "PgSQL2RMQ starting", "[ OK ]")
 		for {
@@ -209,11 +196,6 @@ func main() {
 			fmt.Println("Q-->", datasql, "<--Q")
 		}
 
-		//splitarr := strings.Split(data["SQL"].(string), "$1")
-
-		//if contains(config.SendFilter, splitarr[0]) {
-		//	if config.ShowSendData {
-		//fmt.Println("==>", data["SQL"].(string))
 		for _, filter := range config.SendFilter {
 
 			valid := regexp.MustCompile(filter)

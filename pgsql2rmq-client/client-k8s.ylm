@@ -1,0 +1,20 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: pgsql2rmq-client
+  namespace: production
+  labels: {app: pgsql2rmq-client}
+spec:
+  replicas: 1
+  template:
+    metadata: {labels: {app: pgsql2rmq-client}}
+    spec:
+      containers:
+      - name: pgsql2rmq-client
+        image: 192.168.1.1:5000/myuser/pgsql2rmq-client
+        imagePullPolicy: Always
+
+
+
+
+
