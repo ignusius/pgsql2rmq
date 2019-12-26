@@ -58,10 +58,13 @@ go build pgsql2rmq.go
 
 # Example client from pgsql2rmq
 
-See pgsql2rmq-client
+See [pgsql2rmq-client](pgsql2rmq-client)
 
 
 ![Image alt](https://upload.wikimedia.org/wikipedia/commons/a/a0/Syrischer_Maler_von_1354_001.jpg)
+
+An illustration from a Syrian edition dated 1354. The rabbit fools the elephant king by showing him the reflection of the moon.
+
 Contact
 -------
 * Developer: Alexander Komarov <ignusius@gmail.com>
