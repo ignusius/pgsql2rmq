@@ -55,6 +55,33 @@ go build pgsql2rmq.go
 
 }
 ```
+# Test queries
+```
+root=> SELECT a.attname as test;
+ Field |           Type           
+-------+--------------------------
+ MARK  | bigint
+ TM    | timestamp with time zone
+ VAL   | double precision
+(3 rows)
+
+root=> SELECT a.attname FROM pg_class;
+ attname 
+---------
+ MARK
+ TM
+(2 rows)
+
+root=> SELECT c.relname as "TableName";
+              TableName               
+--------------------------------------
+ DBArch
+ DBAVl_nn_P1_U_1_A
+ DBAVl_nn_P1_U_1_B
+ DBAVl_nn_P1_U_1_C
+(4 rows)
+
+```
 
 # Example client from pgsql2rmq
 
