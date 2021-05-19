@@ -9,7 +9,7 @@ Pgsql2rmq is an implementation of a fake PostgreSQL server for forwarding execut
 # Build and run
 
 ```
-cp -R pgsql2rmq /$HOME/go/src/
+cp -R pgsql2rmq $GOPATH/src/
 go build pgsql2rmq.go
 
 ./pgsql2rmq
