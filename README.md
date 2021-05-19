@@ -48,7 +48,7 @@ go build pgsql2rmq.go
         ]
 
     ],
-    "SendFilter":["^INSERT","^BEGIN","^COMMIT"], <--Filter querys from send to RMQ
+    "SendFilter":["^INSERT","^BEGIN","^COMMIT"], <--Filter queries from send to RMQ
 
     "ShowLog":true,  <--Show log in console
     "ShowSendData":true  <-- Show send data to RMQ
